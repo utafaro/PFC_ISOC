@@ -184,12 +184,29 @@ contract.events.Result((error, event) => {
   }
 });
 
-// Fonction pour soumettre le mouvement choisi
-async function submitMove(move) {
+// Fonction pour rejoindre le jeu
+async function joinGame() {
   const accounts = await web3.eth.requestAccounts();
   const account = accounts[0];
 
-  contract.methods.play(move).send({ from: account })
+  contract.methods.joinGame().send({ from: account })
+    .on('transactionHash', (hash) => {
+      console.log('Transaction hash:', hash);
+    })
+    .on('confirmation', (confirmationNumber, receipt) => {
+      console.log('Confirmation number:', confirmationNumber);
+    })
+    .on('error', (error) => {
+      console.error('Error:', error);
+    });
+}
+
+// Fonction pour soumettre le mouvement choisi
+async function submitMove(move, code) {
+  const accounts = await web3.eth.requestAccounts();
+  const account = accounts[0];
+
+  contract.methods.sendHash(web3.utils.keccak256(web3.eth.abi.encodeParameters(['uint256', 'uint256'], [move, code]))).send({ from: account })
     .on('transactionHash', (hash) => {
       console.log('Transaction hash:', hash);
     })
@@ -202,6 +219,7 @@ async function submitMove(move) {
 }
 
 // Écouteurs d'événements pour les boutons
-document.getElementById('rock').addEventListener('click', () => submitMove(1));
-document.getElementById('paper').addEventListener('click', () => submitMove(2));
-document.getElementById('scissors').addEventListener('click', () => submitMove(3));
+document.getElementById('join').addEventListener('click', joinGame);
+document.getElementById('rock').addEventListener('click', () => submitMove(1, 123));
+document.getElementById('paper').addEventListener('click', () => submitMove(2, 456));
+document.getElementById('scissors').addEventListener('click', () => submitMove(3, 789));
